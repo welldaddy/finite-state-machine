@@ -1,0 +1,121 @@
+from machine import Pin
+from time import sleep
+from motor import Motor
+from ultrasonic import sonic
+
+
+ECHO_1 = 2
+TRIG_1 = 3
+ECHO_2 = ''
+TRIG_2 = ''
+LINE1 = 25 
+# Initialise the motors
+motor_left  = Motor("left", 8, 9, 6)
+motor_right = Motor("right", 10, 11, 7)
+# Initialise the ultrasonic sensor
+ultrasonic_sensor_1 = sonic(ECHO_1, TRIG_1)
+ultrasonic_sensor_2 = sonic(ECHO_2, TRIG_2)
+# Initialise a line sensor
+line_sensor_1 = Pin(LINE1, Pin.IN)
+
+state_list = ['DRIVING', 'FOLLOW_LEFT_WALL', 'FOLLOW_RIGHT_WALL', 'STOPPED']
+
+state = 'DRIVING'  # Default state on init is DRIVING
+
+# Initialise variables
+dir_left = 0
+dir_right = 0
+pwm_left = 0
+pwm_right = 0
+
+while True:
+    # Collect sensor data
+    sonar_dist = ultrasonic_sensor.distance_mm()
+    
+    # (Use analog or binary value, your decision as a team)
+    line_measurement_1 = line_sensor_1.value
+
+
+    # Make decisions according to state machine
+   
+    if state == 'DRIVING':
+        print(state)  # Update to OLED
+        # Actions
+        
+        dir_left = 'fwd'  
+        dir_right =  'fwd'
+        pwm_left =  70
+        pwm_right =  70
+        # Transition condition
+        if ultrasonic_sensor_1 < 200:  # TODO: condition based on measurement here:
+            state = 'FOLLOW_LEFT_WALL'
+        elif ultrasonic_sensor_2 < 200:  # TODO: condition based on measurement here:
+            state = 'FOLLOW_RIGHT_WALL'
+        else:
+            state = state
+
+    elif state == 'FOLLOW_LEFT_WALL':
+        print(state)  # Update to OLED
+        # Actions
+        # TODO: Drive by setting direction and PWM values according to distance
+        dir_left = 'fwd'
+        dir_right = 'fwd'
+        pwm_left = 0
+        pwm_right = 50
+        time.sleep(1)
+        dir_left = 'fwd'
+        dir_right = 'fwd'
+        pwm_left = 70
+        pwm_right = 70
+        # Transition condition
+        if line_measurement_1 == 0:  
+            state = 'STOPPED'
+        else:
+            state = state
+
+
+    elif state == 'FOLLOW_RIGHT_WALL':
+        print(state)  # Update to OLED
+        # Actions
+        
+        dir_left = 'fwd'
+        dir_right = 'fwd'
+        pwm_left = 50
+        pwm_right = 0
+        time.sleep(1)
+        dir_left = 'fwd'
+        dir_right = 'fwd'
+        pwm_left = 70
+        pwm_right = 70
+        # Transition condition
+        if line_measurement_1 == 0:  # TODO: condition based on measurement here
+            state = 'STOPPED'
+        else:
+            state = state
+
+    elif state == 'STOPPED':
+        print(state)  # Update to OLED
+        # Actions
+        dir_left = 'fwd'
+        dir_right = 'fwd'
+        pwm_left = 0
+        pwm_right = 0
+        # No transition condition, remain in a safe state.
+
+    else:
+        print('Incorrect state selected!')  # Update to OLED
+
+    # Finally, send control signals to motors
+    if dir_left == 'fwd':
+        motor_left.set_forwards()
+    else:
+        motor_left.set_backwards()
+    if dir_right == 'fwd':
+        motor_right.set_forwards()
+    else:
+        motor_right.set_backwards()
+
+    motor_left.duty(pwm_left)
+    motor_right.duty(pwm_right)
+
+    time.sleep(0.02)
